@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>College Platform Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #2e6fd73f, #2e6fd748);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .abstract-bg {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    .abstract-shape {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.2;
+      filter: blur(40px);
+      background: #fd7106;
+    }
+
+    .login-container {
+      z-index: 2;
+      background: rgba(23, 135, 199, 0.086);
+      backdrop-filter: blur(20px);
+      border-radius: 30px;
+      padding: 30px;
+      width: 450px;
+      color: rgba(246, 94, 6, 0.966);
+      text-align: center;
+      box-shadow: 0 0 60px rgba(75, 31, 0, 0.59);
+    }
+
+    .login-container h2 {
+      margin-bottom: 20px;
+    }
+
+    input[type="email"], input[type="password"] {
+      width: 100%;
+      padding: 15px;
+      border-radius: 11px;
+      border: none;
+      margin-bottom: 18px;
+      font-size: 16px;
+    }
+
+    .login-container a {
+      display: block;
+      color: #fd7106;
+      font-size: 15px;
+      margin-bottom: 20px;
+      text-decoration: none;
+    }
+
+    .login-container button {
+      background-color: #fd7106;
+      color: rgb(255, 255, 255);
+      border: none;
+      padding: 15px;
+      width: 100%;
+      border-radius: 8px;
+      font-size: 17px;
+      cursor: pointer;
+      margin-bottom: 16px;
+    }
+
+    .social-login {
+      display: flex;
+      justify-content: center;
+      margin: 15px 0;
+    }
+
+    .social-login button {
+      width: 30%;
+      background-color: rgb(244, 244, 244);
+      border: none;
+      border-radius: 6px;
+      padding: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .register-link {
+      font-size: 14px;
+      color: #fd7106;
+    }
+
+    .register-link a {
+      color: #fd7106;
+      font-weight: bold;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="abstract-bg">
+    <div class="abstract-shape" style="top: 10%; left: 10%; width: 100px; height: 100px;"></div>
+    <div class="abstract-shape" style="top: 50%; left: 80%; width: 120px; height: 120px;"></div>
+    <div class="abstract-shape" style="bottom: 20%; right: 10%; width: 80px; height: 80px;"></div>
+  </div>
+
+  <div class="login-container">
+    <h2>EVALIO</h2>
+    <form>
+      <input type="email" placeholder="nom@gmail.com" required />
+      <input type="password" placeholder="mot de passe" required />
+      <a href="#">Mot de passe oublié ?</a>
+      <button type="submit">Se connecter</button>
+    </form>
+
+    <p>ou continuer avec</p>
+    <div class="social-login">
+      <button><img src="https://img.icons8.com/color/24/000000/google-logo.png" alt="Google"></button>
+    </div>
+    <p class="register-link">Pas encore de compte ? <a href="indexinscription.html">Créer un compte</a></p>
+  </div>
+</body>
+</html>
