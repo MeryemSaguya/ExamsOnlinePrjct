@@ -1,12 +1,22 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  firstName: {
+  userType: {
+    type: String,
+    enum: ['student', 'teacher'],
+    required: true
+  },
+  gender: {
+    type: String,
+    enum: ['F', 'M', 'O'],
+    required: true
+  },
+  lastName: {
     type: String,
     required: true,
     trim: true
   },
-  lastName: {
+  firstName: {
     type: String,
     required: true,
     trim: true
@@ -22,10 +32,19 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  userType: {
-    type: String,
-    enum: ['student', 'teacher'],
+  birthDate: {
+    type: Date,
     required: true
+  },
+  school: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  major: {
+    type: String,
+    required: true,
+    trim: true
   },
   createdAt: {
     type: Date,
