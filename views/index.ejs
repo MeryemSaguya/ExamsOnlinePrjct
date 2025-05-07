@@ -1,77 +1,36 @@
-<%- layout('layout') -%>
+<!-- Hero Section -->
+<section class="hero-gradient py-20 px-6 md:px-16 flex flex-col-reverse md:flex-row items-center justify-between gap-10">
+  <div class="max-w-xl">
+    <h2 class="text-4xl md:text-5xl font-extrabold text-blue-900 mb-4 leading-tight">
+      Examens en ligne <br/> Avec <span class="text-blue-600">Facilité & Excellence</span>
+    </h2>
+    <p class="text-lg text-white-600 mb-6">
+      Préparez, passez et gérez les examens sur la plateforme la plus efficace et la plus sécurisée conçue pour l'avenir de l'éducation.
+    </p>
+    <a href="/register" class="inline-block bg-orange-600 hover:bg-orange-600 text-white px-6 py-3 rounded-full font-semibold transition">
+      Commencez dès aujourd'hui
+    </a>
+  </div>
+  <div>
+    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135755.png" alt="Student" class="w-72 md:w-96 floating-img">
+  </div>
+</section>
 
-<%- contentFor('body') %>
-
-  <!-- Hero Section -->
-  <section class="hero-gradient py-20 px-6 md:px-16 flex flex-col-reverse md:flex-row items-center justify-between gap-10">
-    <div class="max-w-xl">
-      <h2 class="text-4xl md:text-5xl font-extrabold text-blue-900 mb-4 leading-tight">
-        Examens en ligne <br/> Avec <span class="text-blue-600">Facilité & Excellence</span>
-      </h2>
-      <p class="text-lg text-white-600 mb-6">
-        Préparez, passez et gérez les examens sur la plateforme la plus efficace et la plus sécurisée conçue pour l'avenir de l'éducation.
-      </p>
-      <a href="/register" class="inline-block bg-orange-600 hover:bg-orange-600 text-white px-6 py-3 rounded-full font-semibold transition">
-        Commencez dès aujourd'hui
-      </a>
+<!-- Features Section -->
+<section class="py-16 px-6 md:px-16 bg-gray-50 text-center">
+  <h3 class="text-3xl font-bold text-gray-800 mb-10">Qu'est-ce qui rend Evalio spécial ?</h3>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-10 text-left">
+    <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition">
+      <h4 class="text-xl font-semibold text-blue-600 mb-2">Connexion sécurisée</h4>
+      <p>Authentification multicouche pour les étudiants et les enseignants avec suivi en temps réel.</p>
     </div>
-    <div>
-      <img src="https://cdn-icons-png.flaticon.com/512/3135/3135755.png" alt="Student" class="w-72 md:w-96 floating-img">
+    <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition">
+      <h4 class="text-xl font-semibold text-blue-600 mb-2">Outils d'examens avancés</h4>
+      <p>Créez des examens chronométrés, randomisez les questions et notez automatiquement en toute simplicité.</p>
     </div>
-  </section>
-
-  <!-- Features Section -->
-  <section id="features" class="py-16 px-6 md:px-16 bg-gray-50 text-center">
-    <h3 class="text-3xl font-bold text-gray-800 mb-10">Qu'est-ce qui rend Evalio spécial ?</h3>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-10 text-left">
-      <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition">
-        <h4 class="text-xl font-semibold text-blue-600 mb-2">Connexion sécurisée</h4>
-        <p>Authentification multicouche pour les étudiants et les enseignants avec suivi en temps réel.</p>
-      </div>
-      <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition">
-        <h4 class="text-xl font-semibold text-blue-600 mb-2">Outils d'examens avancés</h4>
-        <p>Créez des examens chronométrés, randomisez les questions et notez automatiquement en toute simplicité.</p>
-      </div>
-      <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition">
-        <h4 class="text-xl font-semibold text-blue-600 mb-2">Analyse des résultats</h4>
-        <p>Commentaires instantanés avec analyses pour suivre les performances et la croissance des étudiants.</p>
-      </div>
+    <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition">
+      <h4 class="text-xl font-semibold text-blue-600 mb-2">Analyse des résultats</h4>
+      <p>Commentaires instantanés avec analyses pour suivre les performances et la croissance des étudiants.</p>
     </div>
-  </section>
-
-  <!-- Contact Section -->
-  <section id="contact" class="py-16 px-6 md:px-16 bg-white">
-    <h3 class="text-3xl font-bold text-gray-800 mb-10 text-center">Contactez-nous</h3>
-    <div class="max-w-2xl mx-auto">
-      <p class="text-center mb-8 text-gray-600">
-        Vous avez des questions ? N'hésitez pas à nous contacter. Notre équipe est là pour vous aider.
-      </p>
-      <div class="text-center">
-        <a href="mailto:contact@evalio.com" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold transition">
-          Envoyez-nous un email
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- About Section -->
-  <section id="about" class="py-16 px-6 md:px-16 bg-gray-50">
-    <h3 class="text-3xl font-bold text-gray-800 mb-10 text-center">À propos d'Evalio</h3>
-    <div class="max-w-4xl mx-auto text-center">
-      <p class="text-gray-600 mb-6">
-        Evalio est né de la vision de simplifier et de moderniser le processus d'examen en ligne. 
-        Notre plateforme combine sécurité, facilité d'utilisation et innovation pour offrir la 
-        meilleure expérience possible aux étudiants et aux enseignants.
-      </p>
-      <p class="text-gray-600">
-        Avec des années d'expérience dans le domaine de l'éducation en ligne, notre équipe 
-        s'engage à fournir des solutions qui répondent aux besoins réels des établissements 
-        d'enseignement modernes.
-      </p>
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <footer class="py-10 text-center bg-white text-gray-400 text-sm border-t">
-    Copyright 2025 – Evalio
-  </footer>
+  </div>
+</section>

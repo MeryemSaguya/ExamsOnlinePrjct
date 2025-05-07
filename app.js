@@ -12,20 +12,20 @@ require('dotenv').config();
 
 // Import routes and models
 const authRoutes = require('./routes/auth');
-const Exam = require('./Evalio/config/routes/controllers/Exam');
+const Exam = require('./models/Exam');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Connect to MongoDB - temporarily disabled
-// mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/examsonline', {
-//   useNewUrlParser: true,
-//   useUnifiedTopology: true
-// }).then(() => {
-//   console.log('Connected to MongoDB');
-// }).catch(err => {
-//   console.error('MongoDB connection error:', err);
-// });
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/examsonline', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+}).then(() => {
+  console.log('Connected to MongoDB');
+}).catch(err => {
+  console.error('MongoDB connection error:', err);
+});
 
 // Set view engine and layouts
 app.set('view engine', 'ejs');

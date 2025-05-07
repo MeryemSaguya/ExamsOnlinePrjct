@@ -3,28 +3,41 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const User = require('../Evalio/config/models/User');
 
-// Login route
-router.post('/login', async (req, res) => {
+// Middleware to trim inputs (optional but helpful)
+const trimInputs = (req, res, next) => {
+  for (const key in req.body) {
+    if (typeof req.body[key] === 'string') {
+      req.body[key] = req.body[key].trim();
+    }
+  }
+  next();
+};
+
+// LOGIN
+router.post('/login', trimInputs, async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find user by email
+    if (!email || !password) {
+      return res.status(400).render('login', { 
+        error: 'Veuillez fournir un email et un mot de passe' 
+      });
+    }
+
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).render('login', { 
-        error: 'Email ou mot de passe incorrect'
+        error: 'Email ou mot de passe incorrect' 
       });
     }
 
-    // Check password
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       return res.status(401).render('login', { 
-        error: 'Email ou mot de passe incorrect'
+        error: 'Email ou mot de passe incorrect' 
       });
     }
 
-    // Set user session
     req.session.user = {
       id: user._id,
       email: user.email,
@@ -33,40 +46,39 @@ router.post('/login', async (req, res) => {
       lastName: user.lastName
     };
 
-    // Redirect based on user type
-    if (user.userType === 'student') {
-      res.redirect('/student/dashboard');
-    } else {
-      res.redirect('/teacher/dashboard');
-    }
+    res.redirect(user.userType === 'student' ? '/student/dashboard' : '/teacher/dashboard');
+
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).render('error', { 
-      error: 'Une erreur est survenue lors de la connexion'
+      error: 'Une erreur est survenue lors de la connexion' 
     });
   }
 });
 
-// Register route
-router.post('/register', async (req, res) => {
+// REGISTER
+router.post('/register', trimInputs, async (req, res) => {
   try {
     const { 
       userType, gender, lastName, firstName, 
       email, birthDate, school, major, password 
     } = req.body;
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    if (!userType || !email || !password || !firstName || !lastName) {
       return res.status(400).render('register', { 
-        error: 'Cet email est déjà utilisé'
+        error: 'Veuillez remplir tous les champs obligatoires' 
       });
     }
 
-    // Hash password
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).render('register', { 
+        error: 'Cet email est déjà utilisé' 
+      });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
     const user = new User({
       userType,
       gender,
@@ -81,7 +93,6 @@ router.post('/register', async (req, res) => {
 
     await user.save();
 
-    // Set user session
     req.session.user = {
       id: user._id,
       email: user.email,
@@ -90,27 +101,23 @@ router.post('/register', async (req, res) => {
       lastName: user.lastName
     };
 
-    // Redirect based on user type
-    if (user.userType === 'student') {
-      res.redirect('/student/dashboard');
-    } else {
-      res.redirect('/teacher/dashboard');
-    }
+    res.redirect(user.userType === 'student' ? '/student/dashboard' : '/teacher/dashboard');
+
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).render('error', { 
-      error: 'Une erreur est survenue lors de l\'inscription'
+      error: 'Une erreur est survenue lors de l\'inscription' 
     });
   }
 });
 
-// Logout route
+// LOGOUT
 router.get('/logout', (req, res) => {
   req.session.destroy(err => {
     if (err) {
       console.error('Logout error:', err);
       return res.status(500).render('error', { 
-        error: 'Une erreur est survenue lors de la déconnexion'
+        error: 'Une erreur est survenue lors de la déconnexion' 
       });
     }
     res.redirect('/');
