@@ -12,8 +12,8 @@ require('dotenv').config();
 
 // Import routes and models
 const authRoutes = require('./routes/auth');
+const studentRoutes = require('./routes/student');
 const Exam = require('./models/Exam');
-
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -60,20 +60,17 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// CSRF protection - temporarily disabled
-// app.use(csrf());
-// app.use((req, res, next) => {
-//   res.locals.csrfToken = req.csrfToken();
-//   next();
-// });
-
 // Session configuration
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/examsonline',
+    ttl: 24 * 60 * 60 // 1 day
+  }),
   cookie: {
-    secure: false,
+    secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     sameSite: 'strict',
     maxAge: 24 * 60 * 60 * 1000 // 1 day
@@ -85,7 +82,6 @@ app.use(flash());
 
 // Authentication middleware
 const authMiddleware = (req, res, next) => {
-  // Add user and flash messages to locals for all templates
   res.locals.user = req.session.user;
   res.locals.success = req.flash('success');
   res.locals.error = req.flash('error');
@@ -94,8 +90,17 @@ const authMiddleware = (req, res, next) => {
 
 app.use(authMiddleware);
 
+// Protected route middleware
+const requireAuth = (req, res, next) => {
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+  next();
+};
+
 // Routes
 app.use('/auth', authRoutes);
+app.use('/student', studentRoutes);
 
 // Public routes
 app.get('/', (req, res) => {
@@ -121,16 +126,7 @@ app.get('/login', (req, res) => {
   res.render('login');
 });
 
-// Protected route middleware
-const requireAuth = (req, res, next) => {
-  if (!req.session.user) {
-    return res.redirect('/login');
-  }
-  next();
-};
-
 // Protected routes
-// Student dashboard route
 app.get('/student/dashboard', requireAuth, (req, res) => {
   if (req.session.user.userType !== 'student') {
     return res.status(403).render('error', { error: 'Accès non autorisé' });
@@ -138,20 +134,11 @@ app.get('/student/dashboard', requireAuth, (req, res) => {
   res.render('student/dashboard');
 });
 
-// Teacher dashboard route
 app.get('/teacher/dashboard', requireAuth, (req, res) => {
   if (req.session.user.userType !== 'teacher') {
     return res.status(403).render('error', { error: 'Accès non autorisé' });
   }
   res.render('teacher/dashboard');
-});
-
-// Exam creation routes
-app.get('/teacher/exams/create', requireAuth, (req, res) => {
-  if (req.session.user.userType !== 'teacher') {
-    return res.status(403).render('error', { error: 'Accès non autorisé' });
-  }
-  res.render('teacher/createExam');
 });
 
 // Ensure uploads directory exists
@@ -199,8 +186,8 @@ const upload = multer({
   }
 });
 
-// Create exam
-app.post('/teacher/exams/create', requireAuth, async (req, res) => {
+// Create exam route
+app.post('/teacher/exams/create', requireAuth, upload.single('media'), async (req, res) => {
   if (req.session.user.userType !== 'teacher') {
     return res.status(403).render('error', { error: 'Accès non autorisé' });
   }
@@ -221,11 +208,18 @@ app.post('/teacher/exams/create', requireAuth, async (req, res) => {
       }
     };
 
+    if (req.file) {
+      examData.media = {
+        type: req.body.mediaType,
+        path: req.file.path
+      };
+    }
+
     const exam = new Exam(examData);
     await exam.save();
 
     req.flash('success', 'Examen créé avec succès');
-    res.redirect(`/teacher/exams/${exam._id}/questions`);
+    res.redirect('/teacher/dashboard');
   } catch (error) {
     console.error('Error creating exam:', error);
     req.flash('error', 'Erreur lors de la création de l\'examen');
@@ -233,193 +227,23 @@ app.post('/teacher/exams/create', requireAuth, async (req, res) => {
   }
 });
 
-// Edit exam questions page
-app.get('/teacher/exams/:examId/questions', requireAuth, async (req, res) => {
-  if (req.session.user.userType !== 'teacher') {
-    return res.status(403).render('error', { error: 'Accès non autorisé' });
-  }
-
-  try {
-    const exam = await Exam.findById(req.params.examId);
-    if (!exam) {
-      req.flash('error', 'Examen non trouvé');
-      return res.redirect('/teacher/dashboard');
-    }
-
-    if (exam.teacher.toString() !== req.session.user._id.toString()) {
-      return res.status(403).render('error', { error: 'Accès non autorisé' });
-    }
-
-    res.render('teacher/editExamQuestions', { exam });
-  } catch (error) {
-    console.error('Error getting exam:', error);
-    req.flash('error', 'Erreur lors du chargement de l\'examen');
-    res.redirect('/teacher/dashboard');
-  }
-});
-
-// Add question to exam
-app.post('/teacher/exams/:examId/questions', requireAuth, upload.single('media'), async (req, res) => {
-  if (req.session.user.userType !== 'teacher') {
-    return res.status(403).json({ error: 'Accès non autorisé' });
-  }
-
-  try {
-    const exam = await Exam.findById(req.params.examId);
-    if (!exam || exam.teacher.toString() !== req.session.user._id.toString()) {
-      return res.status(403).json({ error: 'Accès non autorisé' });
-    }
-
-    const questionData = {
-      type: req.body.type,
-      statement: req.body.statement,
-      score: parseInt(req.body.score),
-      duration: parseInt(req.body.duration),
-      media: {
-        type: req.body.mediaType || 'none',
-        url: req.file ? `/uploads/${req.file.filename}` : undefined
-      }
-    };
-
-    if (req.body.type === 'direct') {
-      questionData.answer = req.body.answer;
-      questionData.toleranceRate = parseInt(req.body.toleranceRate);
-    } else if (req.body.type === 'mcq') {
-      questionData.options = JSON.parse(req.body.options);
-    }
-
-    exam.questions.push(questionData);
-    await exam.save();
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error adding question:', error);
-    res.status(500).json({ error: 'Erreur lors de l\'ajout de la question' });
-  }
-});
-
-// Update question
-app.put('/teacher/exams/:examId/questions/:questionIndex', requireAuth, upload.single('media'), async (req, res) => {
-  if (req.session.user.userType !== 'teacher') {
-    return res.status(403).json({ error: 'Accès non autorisé' });
-  }
-
-  try {
-    const exam = await Exam.findById(req.params.examId);
-    if (!exam || exam.teacher.toString() !== req.session.user._id.toString()) {
-      return res.status(403).json({ error: 'Accès non autorisé' });
-    }
-
-    const questionIndex = parseInt(req.params.questionIndex);
-    if (questionIndex < 0 || questionIndex >= exam.questions.length) {
-      return res.status(404).json({ error: 'Question non trouvée' });
-    }
-
-    const questionData = {
-      type: req.body.type,
-      statement: req.body.statement,
-      score: parseInt(req.body.score),
-      duration: parseInt(req.body.duration),
-      media: {
-        type: req.body.mediaType || exam.questions[questionIndex].media.type,
-        url: req.file ? `/uploads/${req.file.filename}` : exam.questions[questionIndex].media.url
-      }
-    };
-
-    if (req.body.type === 'direct') {
-      questionData.answer = req.body.answer;
-      questionData.toleranceRate = parseInt(req.body.toleranceRate);
-    } else if (req.body.type === 'mcq') {
-      questionData.options = JSON.parse(req.body.options);
-    }
-
-    exam.questions[questionIndex] = questionData;
-    await exam.save();
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error updating question:', error);
-    res.status(500).json({ error: 'Erreur lors de la modification de la question' });
-  }
-});
-
-// Delete question
-app.delete('/teacher/exams/:examId/questions/:questionIndex', requireAuth, async (req, res) => {
-  if (req.session.user.userType !== 'teacher') {
-    return res.status(403).json({ error: 'Accès non autorisé' });
-  }
-
-  try {
-    const exam = await Exam.findById(req.params.examId);
-    if (!exam || exam.teacher.toString() !== req.session.user._id.toString()) {
-      return res.status(403).json({ error: 'Accès non autorisé' });
-    }
-
-    const questionIndex = parseInt(req.params.questionIndex);
-    if (questionIndex < 0 || questionIndex >= exam.questions.length) {
-      return res.status(404).json({ error: 'Question non trouvée' });
-    }
-
-    exam.questions.splice(questionIndex, 1);
-    await exam.save();
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error deleting question:', error);
-    res.status(500).json({ error: 'Erreur lors de la suppression de la question' });
-  }
-});
-
-// Multer error handling
+// Error handling middleware
 app.use((err, req, res, next) => {
-  if (err instanceof multer.MulterError) {
-    if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ error: 'Le fichier est trop volumineux (max 10MB)' });
-    }
-    return res.status(400).json({ error: 'Erreur lors du téléchargement du fichier' });
-  }
-  next(err);
-});
-
-// CSRF error handling
-app.use((err, req, res, next) => {
-  if (err.code === 'EBADCSRFTOKEN') {
-    return res.status(403).json({ error: 'Session expirée, veuillez rafraîchir la page' });
-  }
-  next(err);
-});
-
-// General error handling middleware
-app.use((err, req, res, next) => {
-  console.error('[ERROR]', err.stack);
-  console.error('[REQUEST]', {
-    method: req.method,
-    url: req.url,
-    headers: req.headers
+  console.error(err.stack);
+  res.status(500).render('error', { 
+    error: 'Une erreur est survenue',
+    message: process.env.NODE_ENV === 'development' ? err.message : undefined
   });
-  if (req.xhr || req.headers.accept.includes('application/json')) {
-    res.status(500).json({ error: 'Une erreur est survenue' });
-  } else {
-    res.status(500).render('error', { 
-      error: process.env.NODE_ENV === 'development' ? err.message : 'Une erreur est survenue'
-    });
-  }
 });
 
-// Start the server
-// 404 handler - must be last
+// 404 handler
 app.use((req, res) => {
-  console.log('[404]', {
-    method: req.method,
-    url: req.url,
-    headers: req.headers
-  });
   res.status(404).render('error', { 
     error: 'Page introuvable'
   });
 });
 
+// Start the server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
-

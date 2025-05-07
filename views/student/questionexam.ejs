@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evalio | Examen en cours</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Poppins', sans-serif; }
+    .hero-gradient { background: linear-gradient(to right, #d2f1e9, #f5f6f8); }
+    .timer-warning { animation: pulse 1s infinite; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- Navbar -->
+  <nav class="bg-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16">
+        <div class="flex items-center">
+          <a href="/" class="text-2xl font-extrabold text-blue-600">Evalio</a>
+        </div>
+        <div class="flex items-center space-x-4">
+          <div class="flex items-center space-x-2">
+            <i class="ri-time-line text-gray-600"></i>
+            <span id="timer" class="text-lg font-semibold text-gray-900">00:00:00</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <i class="ri-question-line text-gray-600"></i>
+            <span class="text-lg font-semibold text-gray-900">
+              Question <span id="current-question"><%= currentQuestionIndex + 1 %></span>/<%= totalQuestions %>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="max-w-3xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div class="bg-white rounded-lg shadow-lg p-8">
+      <!-- Question -->
+      <div class="mb-8">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+          <%= currentQuestion.question %>
+        </h2>
+        
+        <!-- Options -->
+        <div class="space-y-4">
+          <% if (currentQuestion.options && currentQuestion.options.length > 0) { %>
+            <% currentQuestion.options.forEach((option) => { %>
+              <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors
+                <%= selectedAnswer === option ? 'border-blue-500 bg-blue-50' : 'border-gray-200' %>">
+                <input 
+                  type="radio" 
+                  name="answer" 
+                  value="<%= option %>"
+                  class="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                  <%= selectedAnswer === option ? 'checked' : '' %>
+                />
+                <span class="ml-3 text-gray-900"><%= option %></span>
+              </label>
+            <% }); %>
+          <% } else { %>
+            <p class="text-gray-500">Aucune option disponible pour cette question.</p>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="flex justify-between items-center pt-6 border-t">
+        <button 
+          id="prev-question"
+          type="button"
+          class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-full text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          <%= currentQuestionIndex === 0 ? 'disabled' : '' %>
+        >
+          <i class="ri-arrow-left-line mr-2"></i>
+          Question précédente
+        </button>
+
+        <button 
+          id="next-question"
+          type="button"
+          class="inline-flex items-center px-4 py-2 border border-transparent rounded-full text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          <%= currentQuestionIndex === totalQuestions - 1 ? 'Terminer' : 'Question suivante' %>
+          <i class="ri-arrow-right-line ml-2"></i>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Initialize server-side data -->
+  <script>
+    // Pass server data as a data attribute
+    const examData = JSON.parse(document.getElementById('exam-data').textContent);
+  </script>
+
+  <!-- Hidden element containing server data -->
+  <script id="exam-data" type="application/json">
+    {
+      "duration": <%= examDuration %>,
+      "currentIndex": <%= currentQuestionIndex %>,
+      "totalQuestions": <%= totalQuestions %>,
+      "examId": "<%= examId %>",
+      "questionId": "<%= currentQuestion._id %>"
+    }
+  </script>
+
+  <!-- Main script -->
+  <script>
+    // Timer functionality
+    const startTime = new Date().getTime();
+    const endTime = startTime + (examData.duration * 60 * 1000);
+
+    function updateTimer() {
+      const now = new Date().getTime();
+      const timeLeft = endTime - now;
+
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        document.getElementById('timer').classList.add('text-red-600', 'timer-warning');
+        document.getElementById('timer').textContent = '00:00:00';
+        submitExam();
+        return;
+      }
+
+      const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+      document.getElementById('timer').textContent = 
+        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+      if (timeLeft < 5 * 60 * 1000) {
+        document.getElementById('timer').classList.add('text-red-600', 'timer-warning');
+      }
+    }
+
+    const timerInterval = setInterval(updateTimer, 1000);
+    updateTimer();
+
+    // Navigation handlers
+    document.getElementById('prev-question').addEventListener('click', () => {
+      if (examData.currentIndex > 0) {
+        saveAnswer();
+        window.location.href = `/student/exam/${examData.examId}/question/${examData.currentIndex - 1}`;
+      }
+    });
+
+    document.getElementById('next-question').addEventListener('click', () => {
+      saveAnswer();
+      if (examData.currentIndex < examData.totalQuestions - 1) {
+        window.location.href = `/student/exam/${examData.examId}/question/${examData.currentIndex + 1}`;
+      } else {
+        submitExam();
+      }
+    });
+
+    // Save answer function
+    function saveAnswer() {
+      const selectedOption = document.querySelector('input[name="answer"]:checked');
+      if (selectedOption) {
+        fetch(`/student/exam/${examData.examId}/answer`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            questionId: examData.questionId,
+            answer: selectedOption.value
+          })
+        }).catch(error => {
+          console.error('Error saving answer:', error);
+        });
+      }
+    }
+
+    // Submit exam function
+    function submitExam() {
+      fetch(`/student/exam/${examData.examId}/submit`, {
+        method: 'POST'
+      }).then(() => {
+        window.location.href = `/student/exam/${examData.examId}/results`;
+      }).catch(error => {
+        console.error('Error submitting exam:', error);
+      });
+    }
+
+    // Prevent accidental navigation
+    window.addEventListener('beforeunload', (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+    });
+  </script>
+</body>
+</html> 

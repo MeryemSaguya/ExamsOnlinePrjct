@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
-const User = require('../Evalio/config/models/User');
+const User = require('../models/User');
 
 // Middleware to trim inputs (optional but helpful)
 const trimInputs = (req, res, next) => {

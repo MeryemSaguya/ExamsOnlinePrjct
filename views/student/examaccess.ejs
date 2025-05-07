@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evalio | Accès à l'examen</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Poppins', sans-serif; }
+    .hero-gradient { background: linear-gradient(to right, #d2f1e9, #f5f6f8); }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- Navbar -->
+  <nav class="bg-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16">
+        <div class="flex">
+          <div class="flex-shrink-0 flex items-center">
+            <a href="/" class="text-2xl font-extrabold text-blue-600">Evalio</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="max-w-3xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+    <div class="bg-white rounded-lg shadow-lg p-8">
+      <div class="text-center mb-8">
+        <h1 class="text-2xl font-bold text-gray-900 mb-2">Préparation de l'examen</h1>
+        <p class="text-gray-600">Veuillez suivre les étapes ci-dessous pour commencer votre examen</p>
+      </div>
+
+      <!-- Exam Info -->
+      <div class="bg-blue-50 rounded-lg p-6 mb-8">
+        <h2 class="text-lg font-semibold text-blue-900 mb-4"><%= exam.title %></h2>
+        <div class="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <p class="text-gray-600">Durée</p>
+            <p class="font-medium text-gray-900"><%= exam.duration %> minutes</p>
+          </div>
+          <div>
+            <p class="text-gray-600">Nombre de questions</p>
+            <p class="font-medium text-gray-900"><%= exam.totalQuestions %></p>
+          </div>
+          <div>
+            <p class="text-gray-600">Matière</p>
+            <p class="font-medium text-gray-900"><%= exam.subject %></p>
+          </div>
+          <div>
+            <p class="text-gray-600">Date</p>
+            <p class="font-medium text-gray-900"><%= new Date(exam.startDate).toLocaleDateString() %></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Steps -->
+      <div class="space-y-6">
+        <!-- Step 1: Browser Check -->
+        <div class="flex items-start">
+          <div class="flex-shrink-0">
+            <div class="flex items-center justify-center h-8 w-8 rounded-full bg-green-100">
+              <i class="ri-check-line text-green-600"></i>
+            </div>
+          </div>
+          <div class="ml-4">
+            <h3 class="text-sm font-medium text-gray-900">Vérification du navigateur</h3>
+            <p class="mt-1 text-sm text-gray-500">Votre navigateur est compatible avec notre plateforme.</p>
+          </div>
+        </div>
+
+        <!-- Step 2: Geolocation -->
+        <div class="flex items-start">
+          <div class="flex-shrink-0">
+            <div id="geolocation-status" class="flex items-center justify-center h-8 w-8 rounded-full bg-gray-100">
+              <i class="ri-map-pin-line text-gray-600"></i>
+            </div>
+          </div>
+          <div class="ml-4">
+            <h3 class="text-sm font-medium text-gray-900">Activation de la géolocalisation</h3>
+            <p class="mt-1 text-sm text-gray-500">Veuillez autoriser l'accès à votre position pour continuer.</p>
+            <button id="enable-geolocation" class="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-full text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              Activer la géolocalisation
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 3: Start Exam -->
+        <div class="flex items-start">
+          <div class="flex-shrink-0">
+            <div id="start-exam-status" class="flex items-center justify-center h-8 w-8 rounded-full bg-gray-100">
+              <i class="ri-play-circle-line text-gray-600"></i>
+            </div>
+          </div>
+          <div class="ml-4">
+            <h3 class="text-sm font-medium text-gray-900">Démarrer l'examen</h3>
+            <p class="mt-1 text-sm text-gray-500">Cliquez sur le bouton ci-dessous pour commencer l'examen.</p>
+            <button id="start-exam" disabled class="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-full text-white bg-gray-400 cursor-not-allowed">
+              Démarrer l'examen
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let geolocationEnabled = false;
+
+    document.getElementById('enable-geolocation').addEventListener('click', () => {
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            // Success
+            geolocationEnabled = true;
+            document.getElementById('geolocation-status').classList.remove('bg-gray-100');
+            document.getElementById('geolocation-status').classList.add('bg-green-100');
+            document.getElementById('geolocation-status').querySelector('i').classList.remove('text-gray-600');
+            document.getElementById('geolocation-status').querySelector('i').classList.add('text-green-600');
+            document.getElementById('geolocation-status').querySelector('i').classList.remove('ri-map-pin-line');
+            document.getElementById('geolocation-status').querySelector('i').classList.add('ri-check-line');
+            
+            // Enable start exam button
+            const startExamBtn = document.getElementById('start-exam');
+            startExamBtn.disabled = false;
+            startExamBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+            startExamBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+          },
+          (error) => {
+            // Error
+            alert('Erreur: Veuillez autoriser l\'accès à votre position pour continuer.');
+          }
+        );
+      } else {
+        alert('La géolocalisation n\'est pas supportée par votre navigateur.');
+      }
+    });
+
+    document.getElementById('start-exam').addEventListener('click', () => {
+      if (geolocationEnabled) {
+        window.location.href = `/student/exam/<%= exam._id %>/start`;
+      }
+    });
+  </script>
+</body>
+</html>
