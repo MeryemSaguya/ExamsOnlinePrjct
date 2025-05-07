@@ -1,0 +1,15 @@
+<header class="flex justify-between items-center px-8 py-5 shadow-md">
+    <a href="/" class="text-2xl font-extrabold text-blue-600">Evalio</a>
+    <nav class="space-x-6 hidden md:block">
+      <a href="/" class="hover:text-blue-600">Accueil</a>
+      <a href="#about" class="hover:text-blue-600">À propos</a>
+      <a href="#features" class="hover:text-blue-600">Fonctionnalités</a>
+      <a href="#contact" class="hover:text-blue-600">Contactez-nous</a>
+      <% if (user) { %>
+        <a href="<%= user.userType === 'student' ? '/student/dashboard' : '/teacher/dashboard' %>" class="hover:text-blue-600">Tableau de bord</a>
+        <a href="/auth/logout" class="bg-orange-600 text-white px-4 py-2 rounded-full font-semibold hover:bg-blue-700 transition">Déconnexion</a>
+      <% } else { %>
+        <a href="/login" class="bg-orange-600 text-white px-4 py-2 rounded-full font-semibold hover:bg-blue-700 transition">Connexion</a>
+      <% } %>
+    </nav>
+  </header>

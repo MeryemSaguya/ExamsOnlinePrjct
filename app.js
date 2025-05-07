@@ -7,30 +7,41 @@ const flash = require('connect-flash');
 const multer = require('multer');
 const csrf = require('csurf');
 const fs = require('fs');
+const expressLayouts = require('express-ejs-layouts');
 require('dotenv').config();
 
 // Import routes and models
 const authRoutes = require('./routes/auth');
-const Exam = require('./models/Exam');
-c
+const Exam = require('./Evalio/config/routes/controllers/Exam');
+
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/examsonline', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => {
-  console.log('Connected to MongoDB');
-}).catch(err => {
-  console.error('MongoDB connection error:', err);
-});
+// Connect to MongoDB - temporarily disabled
+// mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/examsonline', {
+//   useNewUrlParser: true,
+//   useUnifiedTopology: true
+// }).then(() => {
+//   console.log('Connected to MongoDB');
+// }).catch(err => {
+//   console.error('MongoDB connection error:', err);
+// });
 
-// Set the view engine to EJS
+// Set view engine and layouts
 app.set('view engine', 'ejs');
+app.use(expressLayouts);
+app.set('layout', 'layout');
+app.set('layout extractScripts', true);
+app.set('layout extractStyles', true);
 
 // Set the correct views directory
-app.set('views', path.join(__dirname, 'Evalio', 'config', 'routes', 'controllers', 'views'));
+app.set('views', path.join(__dirname, 'views'));
+
+// Debug middleware
+app.use((req, res, next) => {
+  console.log(`[DEBUG] ${req.method} ${req.url}`);
+  next();
+});
 
 // Security headers
 app.use((req, res, next) => {
@@ -41,41 +52,36 @@ app.use((req, res, next) => {
   next();
 });
 
+// Static files - serve these first
+app.use('/static', express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Static files
-app.use('/static', express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Flash messages
-app.use(flash());
-
-// CSRF protection
-app.use(csrf());
-app.use((req, res, next) => {
-  res.locals.csrfToken = req.csrfToken();
-  next();
-});
+// CSRF protection - temporarily disabled
+// app.use(csrf());
+// app.use((req, res, next) => {
+//   res.locals.csrfToken = req.csrfToken();
+//   next();
+// });
 
 // Session configuration
-// Session configuration with secure settings
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: false,
-  store: MongoStore.create({
-    mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/examsonline',
-    ttl: 24 * 60 * 60 // Session TTL (1 day)
-  }),
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: false,
     httpOnly: true,
     sameSite: 'strict',
     maxAge: 24 * 60 * 60 * 1000 // 1 day
   }
 }));
+
+// Flash messages
+app.use(flash());
 
 // Authentication middleware
 const authMiddleware = (req, res, next) => {
@@ -93,7 +99,12 @@ app.use('/auth', authRoutes);
 
 // Public routes
 app.get('/', (req, res) => {
-  res.render('index');
+  res.render('index', {
+    title: 'Evalio | Plateforme d\'examens en ligne',
+    user: req.session.user || null,
+    error: req.flash('error'),
+    success: req.flash('success')
+  });
 });
 
 app.get('/register', (req, res) => {
@@ -380,24 +391,35 @@ app.use((err, req, res, next) => {
 
 // General error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('[ERROR]', err.stack);
+  console.error('[REQUEST]', {
+    method: req.method,
+    url: req.url,
+    headers: req.headers
+  });
   if (req.xhr || req.headers.accept.includes('application/json')) {
     res.status(500).json({ error: 'Une erreur est survenue' });
   } else {
     res.status(500).render('error', { 
-      error: 'Une erreur est survenue'
+      error: process.env.NODE_ENV === 'development' ? err.message : 'Une erreur est survenue'
     });
   }
 });
 
-// 404 handler
+// Start the server
+// 404 handler - must be last
 app.use((req, res) => {
+  console.log('[404]', {
+    method: req.method,
+    url: req.url,
+    headers: req.headers
+  });
   res.status(404).render('error', { 
     error: 'Page introuvable'
   });
 });
 
-// Start the server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
+

@@ -1,18 +1,66 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs');
-const User = require('../models/User');
+const bcrypt = require('bcrypt');
+const User = require('../Evalio/config/models/User');
+
+// Login route
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Find user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).render('login', { 
+        error: 'Email ou mot de passe incorrect'
+      });
+    }
+
+    // Check password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).render('login', { 
+        error: 'Email ou mot de passe incorrect'
+      });
+    }
+
+    // Set user session
+    req.session.user = {
+      id: user._id,
+      email: user.email,
+      userType: user.userType,
+      firstName: user.firstName,
+      lastName: user.lastName
+    };
+
+    // Redirect based on user type
+    if (user.userType === 'student') {
+      res.redirect('/student/dashboard');
+    } else {
+      res.redirect('/teacher/dashboard');
+    }
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).render('error', { 
+      error: 'Une erreur est survenue lors de la connexion'
+    });
+  }
+});
 
 // Register route
 router.post('/register', async (req, res) => {
   try {
-    const { firstName, lastName, email, password, userType } = req.body;
+    const { 
+      userType, gender, lastName, firstName, 
+      email, birthDate, school, major, password 
+    } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      req.flash('error', 'Un utilisateur avec cet email existe déjà');
-      return res.redirect('/register');
+      return res.status(400).render('register', { 
+        error: 'Cet email est déjà utilisé'
+      });
     }
 
     // Hash password
@@ -20,58 +68,39 @@ router.post('/register', async (req, res) => {
 
     // Create new user
     const user = new User({
-      firstName,
+      userType,
+      gender,
       lastName,
+      firstName,
       email,
-      password: hashedPassword,
-      userType
+      birthDate,
+      school,
+      major,
+      password: hashedPassword
     });
 
     await user.save();
 
-    req.flash('success', 'Inscription réussie! Vous pouvez maintenant vous connecter.');
-    res.redirect('/login');
-  } catch (error) {
-    console.error('Registration error:', error);
-    req.flash('error', 'Erreur lors de l\'inscription');
-    res.redirect('/register');
-  }
-});
-
-// Login route
-router.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    // Find user
-    const user = await User.findOne({ email });
-    if (!user) {
-      req.flash('error', 'Email ou mot de passe incorrect');
-      return res.redirect('/login');
-    }
-
-    // Check password
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) {
-      req.flash('error', 'Email ou mot de passe incorrect');
-      return res.redirect('/login');
-    }
-
-    // Set session
+    // Set user session
     req.session.user = {
-      _id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
+      id: user._id,
       email: user.email,
-      userType: user.userType
+      userType: user.userType,
+      firstName: user.firstName,
+      lastName: user.lastName
     };
 
     // Redirect based on user type
-    res.redirect(user.userType === 'student' ? '/student/dashboard' : '/teacher/dashboard');
+    if (user.userType === 'student') {
+      res.redirect('/student/dashboard');
+    } else {
+      res.redirect('/teacher/dashboard');
+    }
   } catch (error) {
-    console.error('Login error:', error);
-    req.flash('error', 'Erreur lors de la connexion');
-    res.redirect('/login');
+    console.error('Registration error:', error);
+    res.status(500).render('error', { 
+      error: 'Une erreur est survenue lors de l\'inscription'
+    });
   }
 });
 
@@ -80,8 +109,11 @@ router.get('/logout', (req, res) => {
   req.session.destroy(err => {
     if (err) {
       console.error('Logout error:', err);
+      return res.status(500).render('error', { 
+        error: 'Une erreur est survenue lors de la déconnexion'
+      });
     }
-    res.redirect('/login');
+    res.redirect('/');
   });
 });
 
